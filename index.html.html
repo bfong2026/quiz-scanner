@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Grade 6 Math Quiz & OMR Scanner</title>
+<style>
+  :root {
+    --primary: #1e3a8a;
+    --accent: #2563eb;
+    --bg: #f8fafc;
+    --card: #ffffff;
+    --border: #cbd5e1;
+    --text: #0f172a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    padding: 16px;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Screen UI Controls */
+  .no-print {
+    max-width: 900px;
+    margin: 0 auto 20px auto;
+  }
+  .header-panel {
+    background: var(--card);
+    padding: 16px 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.08);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    border: 1px solid var(--border);
+  }
+  h1 { margin: 0; font-size: 1.25rem; color: var(--primary); }
+  .btn-group { display: flex; gap: 8px; flex-wrap: wrap; }
+  button {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 8px 14px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+  }
+  button:hover { background: var(--accent); }
+  button.secondary {
+    background: #f1f5f9;
+    color: #334155;
+    border: 1px solid var(--border);
+  }
+  button.secondary:hover { background: #e2e8f0; }
+
+  .panel {
+    background: var(--card);
+    padding: 16px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+  }
+  .scanner-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  @media (max-width: 768px) {
+    .scanner-grid { grid-template-columns: 1fr; }
+  }
+  video, canvas {
+    width: 100%;
+    border-radius: 6px;
+    background: #000;
+    border: 1px solid var(--border);
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 10px;
+    font-size: 0.85rem;
+  }
+  th, td {
+    padding: 6px 10px;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+  }
+  th { background: #f8fafc; font-weight: 600; }
+
+  /* Printable Sheet Styling */
+  .printable-page {
+    background: white;
+    width: 8.0in;
+    height: 10.5in;
+    max-height: 10.5in;
+    margin: 20px auto;
+    padding: 0.35in 0.35in 0.3in 0.35in;
+    position: relative;
+    box-shadow: 0 0 10px rgba(0,0,0,0.15);
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  /* High-Contrast SVG Registration Corner Blocks */
+  .reg-mark {
+    position: absolute;
+    width: 22px;
+    height: 22px;
+    line-height: 0;
+  }
+  .reg-tl { top: 0.2in; left: 0.2in; }
+  .reg-tr { top: 0.2in; right: 0.2in; }
+  .reg-bl { bottom: 0.2in; left: 0.2in; }
+  .reg-br { bottom: 0.2in; right: 0.2in; }
+
+  .quiz-header {
+    border-bottom: 2px solid #000;
+    padding-bottom: 4px;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .quiz-header h2 { margin: 0; font-size: 1.15rem; text-transform: uppercase; }
+  .student-fields { display: flex; gap: 16px; font-size: 0.85rem; font-weight: bold; }
+  .underline-fill { display: inline-block; border-bottom: 1.5px solid #000; width: 130px; height: 14px; }
+
+  .quiz-body {
+    display: grid;
+    grid-template-columns: 69% 31%;
+    gap: 12px;
+    flex-grow: 1;
+  }
+
+  .questions-col {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .question-item {
+    font-size: 0.78rem;
+    line-height: 1.2;
+  }
+  .q-title { font-weight: bold; margin-bottom: 2px; }
+  .mc-options {
+    margin-left: 10px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px 6px;
+  }
+
+  .omr-col {
+    border-left: 2px dashed #64748b;
+    padding-left: 10px;
+    display: flex;
+    flex-direction: column;
+  }
+  .omr-instruction {
+    font-size: 0.7rem;
+    text-align: center;
+    font-weight: bold;
+    color: #0f172a;
+    margin-bottom: 4px;
+    border-bottom: 1px solid #94a3b8;
+    padding-bottom: 2px;
+  }
+  .version-picker {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #e2e8f0;
+    padding: 4px 6px;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    font-size: 0.75rem;
+    font-weight: bold;
+  }
+  .bubble-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    height: 24px;
+    padding: 0 2px;
+    border-bottom: 1px dotted #cbd5e1;
+  }
+  .bubble-q-num {
+    font-weight: bold;
+    font-size: 0.78rem;
+    width: 20px;
+  }
+  .bubble-options {
+    display: flex;
+    gap: 6px;
+  }
+  .bubble {
+    width: 15px;
+    height: 15px;
+    border: 1.6px solid #000;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.6rem;
+    font-weight: bold;
+  }
+
+  .written-section {
+    margin-top: 4px;
+    border: 1.5px solid #000;
+    border-radius: 4px;
+    padding: 6px;
+  }
+  .written-section h4 { margin: 0 0 2px 0; font-size: 0.78rem; }
+  .written-box { height: 50px; width: 100%; }
+
+  /* Strict Single-Page Print Setup */
+  @page {
+    size: letter portrait;
+    margin: 0.25in;
+  }
+  @media print {
+    html, body {
+      background: #fff !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      height: 100% !important;
+    }
+    .no-print { display: none !important; }
+    .printable-page {
+      box-shadow: none !important;
+      border: none !important;
+      margin: 0 auto !important;
+      width: 100% !important;
+      height: 10.4in !important;
+      max-height: 10.4in !important;
+      page-break-inside: avoid !important;
+      page-break-after: always !important;
+      padding: 0.3in 0.3in 0.25in 0.3in !important;
+    }
+  }
+</style>
+</head>
+<body>
+
+<div class="no-print">
+  <div class="header-panel">
+    <div>
+      <h1>Place Value Quiz Generator & OMR Scanner</h1>
+      <small>Grade 6 Math Assessment • 1-Page Letter Layout</small>
+    </div>
+    <div class="btn-group">
+      <button onclick="window.print()">🖨️ Print Quizzes (A, B, C, D)</button>
+      <button class="secondary" onclick="toggleScanner()">📷 Open Scanner</button>
+      <button class="secondary" onclick="exportCSV()">📥 Export Gradebook CSV</button>
+    </div>
+  </div>
+
+  <div id="scannerSection" class="panel" style="display:none; margin-top:14px;">
+    <h2>Sheet Scanner & Auto-Marking</h2>
+    <div class="scanner-grid">
+      <div>
+        <video id="webcam" autoplay playsinline muted></video>
+        <div style="margin-top:8px; display:flex; gap:8px;">
+          <button onclick="startCamera()">Turn On Camera</button>
+          <button class="secondary" onclick="captureAndProcess()">Scan Page</button>
+          <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFileUpload(event)">
+          <button class="secondary" onclick="document.getElementById('fileInput').click()">Upload Photo</button>
+        </div>
+      </div>
+      <div>
+        <canvas id="procCanvas"></canvas>
+        <div id="scanResult" style="margin-top:8px; font-size:0.9rem; font-weight:600;"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel" style="margin-top:14px;">
+    <h3>Class Scores (<span id="scoreCount">0</span> Submissions)</h3>
+    <table id="scoresTable">
+      <thead>
+        <tr>
+          <th>Student ID</th>
+          <th>Version</th>
+          <th>Score (MC /10)</th>
+          <th>Percentage</th>
+          <th>Timestamp</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
+
+<div id="quizSheetsContainer"></div>
+
+<script>
+const quizVersions = [
+  {
+    version: "A",
+    questions: [
+      { q: "What is the value of the 7 in 4,726,381?", opts: ["70,000", "700,000", "7,000", "7,000,000"], ans: "B" },
+      { q: "What is the value of the 4 in 0.842?", opts: ["4 tenths", "4 hundredths", "4 thousandths", "4 ones"], ans: "B" },
+      { q: "What place value is the digit 9 in 12.905?", opts: ["Ones", "Tenths", "Hundredths", "Tens"], ans: "B" },
+      { q: "Which represents 5,204,030 in expanded form?", opts: ["5,000,000 + 20,000 + 4,000 + 30", "5,000,000 + 200,000 + 4,000 + 30", "500,000 + 20,000 + 4,000 + 3", "5,000,000 + 200,000 + 400 + 30"], ans: "B" },
+      { q: "Standard form: 6,000,000 + 40,000 + 800 + 5", opts: ["6,400,805", "6,040,805", "6,048,005", "6,480,005"], ans: "B" },
+      { q: "How many times greater is the 6 in 60,000 than in 600?", opts: ["10 times", "100 times", "1,000 times", "10,000 times"], ans: "B" },
+      { q: "Which digit is in the thousandths place in 35.819?", opts: ["3", "8", "1", "9"], ans: "D" },
+      { q: "Standard form of (3 × 100,000) + (7 × 1,000) + (4 × 10)?", opts: ["307,040", "370,040", "307,400", "37,040"], ans: "A" },
+      { q: "Mystery Number: Millions=6. Hundred-thousands=half of millions. Thousands=3 more than hundred-thousands. Tens=2 less than thousands. Other digits 0.", opts: ["6,306,040", "6,303,040", "6,206,040", "6,360,040"], ans: "A" },
+      { q: "Which comparison statement is true?", opts: ["0.45 > 0.5", "3.08 > 3.80", "1.205 < 1.250", "0.09 > 0.1"], ans: "C" }
+    ],
+    q11: "Mystery Number: Millions digit is 7. Tenths digit is 3. Hundredths digit is double the tenths digit. All other digits are 0. Write this decimal in standard form and expanded form."
+  },
+  {
+    version: "B",
+    questions: [
+      { q: "What is the value of the 8 in 7,842,109?", opts: ["8,000,000", "800,000", "80,000", "8,000"], ans: "B" },
+      { q: "What is the value of the 6 in 0.561?", opts: ["6 ones", "6 tenths", "6 hundredths", "6 thousandths"], ans: "C" },
+      { q: "What place value is the digit 7 in 48.172?", opts: ["Tenths", "Hundredths", "Thousandths", "Tens"], ans: "B" },
+      { q: "Which represents 6,405,020 in expanded form?", opts: ["6,000,000 + 40,000 + 5,000 + 20", "6,000,000 + 400,000 + 5,000 + 20", "600,000 + 40,000 + 500 + 20", "6,000,000 + 400,000 + 500 + 2"], ans: "B" },
+      { q: "Standard form: 4,000,000 + 70,000 + 600 + 8", opts: ["4,700,608", "4,070,608", "4,076,008", "4,706,008"], ans: "B" },
+      { q: "How many times greater is the 5 in 500,000 than in 5,000?", opts: ["10 times", "100 times", "1,000 times", "10,000 times"], ans: "B" },
+      { q: "Which digit is in the thousandths place in 91.468?", opts: ["9", "4", "6", "8"], ans: "D" },
+      { q: "Standard form of (5 × 100,000) + (9 × 1,000) + (3 × 10)?", opts: ["509,030", "590,030", "509,300", "59,030"], ans: "A" },
+      { q: "Mystery Number: Millions=8. Hundred-thousands=half of millions. Thousands=1 more than hundred-thousands. Tens=3 less than thousands. Other digits 0.", opts: ["8,405,020", "8,404,020", "8,205,020", "8,450,020"], ans: "A" },
+      { q: "Which comparison statement is true?", opts: ["0.62 > 0.7", "4.05 > 4.50", "2.304 < 2.340", "0.08 > 0.2"], ans: "C" }
+    ],
+    q11: "Mystery Number: Millions digit is 5. Tenths digit is 4. Hundredths digit is half the tenths digit. All other digits are 0. Write this decimal in standard form and expanded form."
+  },
+  {
+    version: "C",
+    questions: [
+      { q: "What is the value of the 3 in 5,318,204?", opts: ["30,000", "3,000,000", "300,000", "3,000"], ans: "C" },
+      { q: "What is the value of the 9 in 0.479?", opts: ["9 thousandths", "9 hundredths", "9 tenths", "9 ones"], ans: "A" },
+      { q: "What place value is the digit 4 in 93.412?", opts: ["Tenths", "Hundredths", "Thousandths", "Ones"], ans: "A" },
+      { q: "Which represents 8,302,040 in expanded form?", opts: ["8,000,000 + 300,000 + 2,000 + 40", "8,000,000 + 30,000 + 2,000 + 40", "800,000 + 30,000 + 200 + 4", "8,000,000 + 300,000 + 200 + 40"], ans: "A" },
+      { q: "Standard form: 7,000,000 + 50,000 + 400 + 2", opts: ["7,500,402", "7,050,402", "7,054,002", "7,540,002"], ans: "B" },
+      { q: "How many times greater is the 9 in 90,000 than in 90?", opts: ["10 times", "100 times", "1,000 times", "10,000 times"], ans: "C" },
+      { q: "Which digit is in the thousandths place in 62.735?", opts: ["6", "7", "3", "5"], ans: "D" },
+      { q: "Standard form of (8 × 100,000) + (4 × 1,000) + (6 × 10)?", opts: ["804,060", "840,060", "804,600", "84,060"], ans: "A" },
+      { q: "Mystery Number: Millions=4. Hundred-thousands=half of millions. Thousands=4 more than hundred-thousands. Tens=5 less than thousands. Other digits 0.", opts: ["4,206,010", "4,204,010", "4,106,010", "4,260,010"], ans: "A" },
+      { q: "Which comparison statement is true?", opts: ["0.39 > 0.4", "5.02 > 5.20", "3.109 < 3.190", "0.07 > 0.3"], ans: "C" }
+    ],
+    q11: "Mystery Number: Millions digit is 9. Tenths digit is 2. Hundredths digit is triple the tenths digit. All other digits are 0. Write this decimal in standard form and expanded form."
+  },
+  {
+    version: "D",
+    questions: [
+      { q: "What is the value of the 9 in 2,954,701?", opts: ["9,000", "90,000", "900,000", "9,000,000"], ans: "C" },
+      { q: "What is the value of the 5 in 0.352?", opts: ["5 ones", "5 tenths", "5 hundredths", "5 thousandths"], ans: "C" },
+      { q: "What place value is the digit 8 in 61.284?", opts: ["Tenths", "Hundredths", "Thousandths", "Tens"], ans: "B" },
+      { q: "Which represents 7,503,060 in expanded form?", opts: ["7,000,000 + 50,000 + 3,000 + 60", "7,000,000 + 500,000 + 3,000 + 60", "700,000 + 50,000 + 300 + 6", "7,000,000 + 500,000 + 300 + 60"], ans: "B" },
+      { q: "Standard form: 9,000,000 + 80,000 + 300 + 4", opts: ["9,800,304", "9,080,304", "9,083,004", "9,830,004"], ans: "B" },
+      { q: "How many times greater is the 4 in 40,000 than in 400?", opts: ["10 times", "100 times", "1,000 times", "10,000 times"], ans: "B" },
+      { q: "Which digit is in the thousandths place in 84.197?", opts: ["8", "1", "9", "7"], ans: "D" },
+      { q: "Standard form of (6 × 100,000) + (2 × 1,000) + (9 × 10)?", opts: ["602,090", "620,090", "602,900", "62,090"], ans: "A" },
+      { q: "Mystery Number: Millions=6. Hundred-thousands=1/3 of millions. Thousands=5 more than hundred-thousands. Tens=4 less than thousands. Other digits 0.", opts: ["6,207,030", "6,205,030", "6,307,030", "6,270,030"], ans: "A" },
+      { q: "Which comparison statement is true?", opts: ["0.58 > 0.6", "6.04 > 6.40", "4.208 < 4.280", "0.06 > 0.2"], ans: "C" }
+    ],
+    q11: "Mystery Number: Millions digit is 8. Tenths digit is 3. Hundredths digit is 2 less than tenths. All other digits are 0. Write this decimal in standard form and expanded form."
+  }
+];
+
+const svgBlock = `<svg width="22" height="22" viewBox="0 0 22 22"><rect width="22" height="22" fill="#000000" /></svg>`;
+
+function renderQuizzes() {
+  const container = document.getElementById("quizSheetsContainer");
+  container.innerHTML = "";
+
+  quizVersions.forEach((quiz) => {
+    const page = document.createElement("div");
+    page.className = "printable-page";
+
+    page.innerHTML = `
+      <div class="reg-mark reg-tl">${svgBlock}</div>
+      <div class="reg-mark reg-tr">${svgBlock}</div>
+      <div class="reg-mark reg-bl">${svgBlock}</div>
+      <div class="reg-mark reg-br">${svgBlock}</div>
+
+      <div class="quiz-header">
+        <div>
+          <h2>Grade 6 Math: Place Value</h2>
+        </div>
+        <div class="student-fields">
+          <div>NAME: <span class="underline-fill"></span></div>
+          <div>DATE: <span class="underline-fill" style="width:75px;"></span></div>
+        </div>
+      </div>
+
+      <div class="quiz-body">
+        <div class="questions-col">
+          ${quiz.questions.map((q, idx) => `
+            <div class="question-item">
+              <div class="q-title">${idx + 1}. ${q.q}</div>
+              <div class="mc-options">
+                ${q.opts.map((opt, oIdx) => `
+                  <div><strong>${String.fromCharCode(65 + oIdx)}.</strong> ${opt}</div>
+                `).join('')}
+              </div>
+            </div>
+          `).join('')}
+
+          <div class="written-section">
+            <h4>Question 11 (Math Reasoning):</h4>
+            <div style="font-size:0.75rem; margin-bottom:2px;">${quiz.q11}</div>
+            <div class="written-box"></div>
+          </div>
+        </div>
+
+        <div class="omr-col">
+          <div class="omr-instruction">BUBBLE ANSWERS (●)</div>
+          
+          <div class="version-picker">
+            <span>VERSION:</span>
+            <div class="bubble-options">
+              ${['A','B','C','D'].map(v => `
+                <div class="bubble" style="${v === quiz.version ? 'background:#000; color:#fff;' : ''}">${v}</div>
+              `).join('')}
+            </div>
+          </div>
+
+          ${[...Array(10)].map((_, i) => `
+            <div class="bubble-row">
+              <span class="bubble-q-num">${i + 1}.</span>
+              <div class="bubble-options">
+                <div class="bubble">A</div>
+                <div class="bubble">B</div>
+                <div class="bubble">C</div>
+                <div class="bubble">D</div>
+              </div>
+            </div>
+          `).join('')}
+
+          <div style="margin-top:14px; font-size:0.72rem; border:1px solid #94a3b8; border-radius:4px; padding:4px; background:#f8fafc;">
+            <strong>Score Box:</strong>
+            <div style="margin-top:2px;">Q11: ___ / 2</div>
+            <div>Scan: ___ / 10</div>
+            <div>Total: ___ / 12</div>
+          </div>
+        </div>
+      </div>
+    `;
+    container.appendChild(page);
+  });
+}
+
+let videoStream = null;
+const scoredRoster = [];
+
+function toggleScanner() {
+  const panel = document.getElementById("scannerSection");
+  panel.style.display = panel.style.display === "none" ? "block" : "none";
+}
+
+async function startCamera() {
+  try {
+    videoStream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } }
+    });
+    document.getElementById("webcam").srcObject = videoStream;
+  } catch (err) {
+    alert("Camera access error: " + err.message + "\nYou can use 'Upload Photo' instead.");
+  }
+}
+
+function handleFileUpload(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const img = new Image();
+  img.onload = () => processImage(img);
+  img.src = URL.createObjectURL(file);
+}
+
+function captureAndProcess() {
+  const video = document.getElementById("webcam");
+  if (!video.videoWidth) {
+    alert("Camera not started yet.");
+    return;
+  }
+  const offCanvas = document.createElement("canvas");
+  offCanvas.width = video.videoWidth;
+  offCanvas.height = video.videoHeight;
+  const ctx = offCanvas.getContext("2d");
+  ctx.drawImage(video, 0, 0);
+  processImage(offCanvas);
+}
+
+function processImage(imgSource) {
+  const canvas = document.getElementById("procCanvas");
+  const ctx = canvas.getContext("2d");
+  
+  const W = 800;
+  const H = 1050;
+  canvas.width = W;
+  canvas.height = H;
+  ctx.drawImage(imgSource, 0, 0, W, H);
+
+  const imgData = ctx.getImageData(0, 0, W, H);
+  const data = imgData.data;
+
+  function sampleBubbleDarkness(cx, cy, radius = 7) {
+    let darkPixels = 0;
+    let total = 0;
+    for (let y = cy - radius; y <= cy + radius; y++) {
+      for (let x = cx - radius; x <= cx + radius; x++) {
+        if (x < 0 || x >= W || y < 0 || y >= H) continue;
+        const idx = (Math.floor(y) * W + Math.floor(x)) * 4;
+        const brightness = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
+        if (brightness < 110) darkPixels++;
+        total++;
+      }
+    }
+    return darkPixels / total;
+  }
+
+  const vY = H * 0.115;
+  const versionXs = [W * 0.865, W * 0.90, W * 0.935, W * 0.97];
+  let detectedVersion = "A";
+  let maxVDarkness = -1;
+  const vLetters = ['A', 'B', 'C', 'D'];
+
+  versionXs.forEach((x, i) => {
+    const darkness = sampleBubbleDarkness(x, vY);
+    if (darkness > maxVDarkness) {
+      maxVDarkness = darkness;
+      detectedVersion = vLetters[i];
+    }
+  });
+
+  const bubbleOptionsX = [W * 0.81, W * 0.855, W * 0.90, W * 0.945];
+  const qStartY = H * 0.145;
+  const qRowHeight = H * 0.026;
+
+  const detectedAnswers = [];
+  const chosenKey = quizVersions.find(v => v.version === detectedVersion) || quizVersions[0];
+
+  for (let q = 0; q < 10; q++) {
+    const cy = qStartY + q * qRowHeight;
+    let maxDark = -1;
+    let chosenOption = "-";
+
+    bubbleOptionsX.forEach((cx, oIdx) => {
+      const d = sampleBubbleDarkness(cx, cy);
+      ctx.strokeStyle = d > 0.4 ? "red" : "green";
+      ctx.lineWidth = 2;
+      ctx.strokeRect(cx - 7, cy - 7, 14, 14);
+
+      if (d > maxDark && d > 0.35) {
+        maxDark = d;
+        chosenOption = String.fromCharCode(65 + oIdx);
+      }
+    });
+    detectedAnswers.push(chosenOption);
+  }
+
+  let correctCount = 0;
+  chosenKey.questions.forEach((q, idx) => {
+    if (detectedAnswers[idx] === q.ans) correctCount++;
+  });
+
+  const percentage = Math.round((correctCount / 10) * 100);
+  const studentID = "STU-" + String(scoredRoster.length + 1).padStart(3, '0');
+
+  document.getElementById("scanResult").innerHTML = `
+    ✅ Scanned: Version <strong>${detectedVersion}</strong> | 
+    Score: <strong>${correctCount}/10 (${percentage}%)</strong>
+  `;
+
+  scoredRoster.push({
+    id: studentID,
+    version: detectedVersion,
+    score: correctCount,
+    pct: percentage + "%",
+    time: new Date().toLocaleTimeString()
+  });
+  updateScoreTable();
+}
+
+function updateScoreTable() {
+  const tbody = document.querySelector("#scoresTable tbody");
+  tbody.innerHTML = "";
+  scoredRoster.forEach(row => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `
+      <td>${row.id}</td>
+      <td><strong>${row.version}</strong></td>
+      <td>${row.score}/10</td>
+      <td>${row.pct}</td>
+      <td>${row.time}</td>
+    `;
+    tbody.prepend(tr);
+  });
+  document.getElementById("scoreCount").innerText = scoredRoster.length;
+}
+
+function exportCSV() {
+  if (scoredRoster.length === 0) {
+    alert("No student results recorded yet.");
+    return;
+  }
+  let csv = "StudentID,Version,Score_Out_Of_10,Percentage,Timestamp\n";
+  scoredRoster.forEach(r => {
+    csv += `${r.id},${r.version},${r.score},${r.pct},${r.time}\n`;
+  });
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.setAttribute("href", url);
+  link.setAttribute("download", `PlaceValue_Scores_${new Date().toISOString().slice(0,10)}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+renderQuizzes();
+</script>
+</body>
+</html>
