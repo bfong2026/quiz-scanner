@@ -75,7 +75,34 @@
   @media (max-width: 768px) {
     .scanner-grid { grid-template-columns: 1fr; }
   }
-  video, canvas {
+
+  .video-container {
+    position: relative;
+    width: 100%;
+    border-radius: 8px;
+    overflow: hidden;
+    background: #000;
+  }
+  video {
+    width: 100%;
+    height: 320px;
+    object-fit: cover;
+    display: block;
+  }
+  /* Guide overlay box on viewfinder to help frame paper */
+  .guide-overlay {
+    position: absolute;
+    top: 5%;
+    left: 8%;
+    right: 8%;
+    bottom: 5%;
+    border: 2px dashed rgba(255, 255, 255, 0.7);
+    border-radius: 8px;
+    pointer-events: none;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.35);
+  }
+
+  canvas {
     width: 100%;
     border-radius: 6px;
     background: #000;
@@ -110,7 +137,6 @@
     overflow: hidden;
   }
 
-  /* High-Contrast SVG Registration Corner Blocks */
   .reg-mark {
     position: absolute;
     width: 22px;
@@ -222,7 +248,6 @@
   .written-section h4 { margin: 0 0 2px 0; font-size: 0.78rem; }
   .written-box { height: 50px; width: 100%; }
 
-  /* Strict Single-Page Print Setup */
   @page {
     size: letter portrait;
     margin: 0.25in;
@@ -255,7 +280,7 @@
   <div class="header-panel">
     <div>
       <h1>Place Value Quiz Generator & OMR Scanner</h1>
-      <small>Grade 6 Math Assessment • 1-Page Letter Layout</small>
+      <small>Grade 6 Math Assessment • Live Camera Stream</small>
     </div>
     <div class="btn-group">
       <button onclick="window.print()">🖨️ Print Quizzes (A, B, C, D)</button>
@@ -268,17 +293,18 @@
     <h2>Sheet Scanner & Auto-Marking</h2>
     <div class="scanner-grid">
       <div>
-        <video id="webcam" autoplay playsinline muted></video>
-        <div style="margin-top:8px; display:flex; gap:8px;">
+        <div class="video-container">
+          <video id="webcam" autoplay playsinline webkit-playsinline muted></video>
+          <div class="guide-overlay"></div>
+        </div>
+        <div style="margin-top:10px; display:flex; gap:8px;">
           <button onclick="startCamera()">Turn On Camera</button>
-          <button class="secondary" onclick="captureAndProcess()">Scan Page</button>
-          <input type="file" id="fileInput" accept="image/*" style="display:none" onchange="handleFileUpload(event)">
-          <button class="secondary" onclick="document.getElementById('fileInput').click()">Upload Photo</button>
+          <button class="secondary" onclick="captureAndProcess()" style="background:#16a34a; color:#fff;">⚡ Scan Sheet</button>
         </div>
       </div>
       <div>
         <canvas id="procCanvas"></canvas>
-        <div id="scanResult" style="margin-top:8px; font-size:0.9rem; font-weight:600;"></div>
+        <div id="scanResult" style="margin-top:8px; font-size:0.95rem; font-weight:600;"></div>
       </div>
     </div>
   </div>
@@ -462,28 +488,34 @@ function toggleScanner() {
 }
 
 async function startCamera() {
-  try {
-    videoStream = await navigator.mediaDevices.getUserMedia({
-      video: { facingMode: "environment", width: { ideal: 1920 }, height: { ideal: 1080 } }
-    });
-    document.getElementById("webcam").srcObject = videoStream;
-  } catch (err) {
-    alert("Camera access error: " + err.message + "\nYou can use 'Upload Photo' instead.");
-  }
-}
+  const constraints = {
+    audio: false,
+    video: {
+      facingMode: { ideal: "environment" },
+      width: { ideal: 1280 },
+      height: { ideal: 720 }
+    }
+  };
 
-function handleFileUpload(event) {
-  const file = event.target.files[0];
-  if (!file) return;
-  const img = new Image();
-  img.onload = () => processImage(img);
-  img.src = URL.createObjectURL(file);
+  try {
+    if (videoStream) {
+      videoStream.getTracks().forEach(track => track.stop());
+    }
+    videoStream = await navigator.mediaDevices.getUserMedia(constraints);
+    const video = document.getElementById("webcam");
+    video.srcObject = videoStream;
+    video.setAttribute("playsinline", "true");
+    video.setAttribute("webkit-playsinline", "true");
+    await video.play();
+  } catch (err) {
+    alert("Camera permission error: " + err.name + "\nMake sure camera permissions are enabled in iOS Settings.");
+  }
 }
 
 function captureAndProcess() {
   const video = document.getElementById("webcam");
   if (!video.videoWidth) {
-    alert("Camera not started yet.");
+    alert("Camera is not running. Tap 'Turn On Camera' first.");
     return;
   }
   const offCanvas = document.createElement("canvas");
