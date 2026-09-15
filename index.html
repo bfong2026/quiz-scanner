@@ -24,6 +24,7 @@
     print-color-adjust: exact !important;
   }
 
+  /* Screen UI Controls */
   .no-print {
     max-width: 900px;
     margin: 0 auto 20px auto;
@@ -58,6 +59,7 @@
     color: #334155;
     border: 1px solid var(--border);
   }
+  button.secondary:hover { background: #e2e8f0; }
 
   .panel {
     background: var(--card);
@@ -83,16 +85,16 @@
   }
   video {
     width: 100%;
-    height: 340px;
+    height: 320px;
     object-fit: cover;
     display: block;
   }
   .guide-overlay {
     position: absolute;
-    top: 6%;
+    top: 5%;
     left: 20%;
     right: 20%;
-    bottom: 6%;
+    bottom: 5%;
     border: 2px dashed #22c55e;
     border-radius: 6px;
     pointer-events: none;
@@ -117,14 +119,14 @@
   }
   th { background: #f8fafc; font-weight: 600; }
 
-  /* Printable Sheet Styling */
+  /* Printable Sheet Styling - Locked to single 8.5 x 11 sheet */
   .printable-page {
     background: white;
     width: 8.0in;
-    height: 10.4in;
-    max-height: 10.4in;
-    margin: 20px auto;
-    padding: 0.35in;
+    height: 10.2in;
+    max-height: 10.2in;
+    margin: 16px auto;
+    padding: 0.3in 0.35in 0.25in 0.35in;
     box-shadow: 0 0 10px rgba(0,0,0,0.15);
     display: flex;
     flex-direction: column;
@@ -134,118 +136,133 @@
 
   .quiz-header {
     border-bottom: 2px solid #000;
-    padding-bottom: 4px;
-    margin-bottom: 8px;
+    padding-bottom: 3px;
+    margin-bottom: 6px;
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
   }
-  .quiz-header h2 { margin: 0; font-size: 1.15rem; text-transform: uppercase; }
-  .student-fields { display: flex; gap: 16px; font-size: 0.85rem; font-weight: bold; }
-  .underline-fill { display: inline-block; border-bottom: 1.5px solid #000; width: 130px; height: 14px; }
+  .quiz-header h2 { margin: 0; font-size: 1.1rem; text-transform: uppercase; }
+  .student-fields { display: flex; gap: 14px; font-size: 0.82rem; font-weight: bold; }
+  .underline-fill { display: inline-block; border-bottom: 1.5px solid #000; width: 120px; height: 13px; }
 
   .quiz-body {
     display: grid;
-    grid-template-columns: 68% 32%;
-    gap: 14px;
+    grid-template-columns: 69% 31%;
+    gap: 12px;
     flex-grow: 1;
   }
 
   .questions-col {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 4px;
   }
   .question-item {
-    font-size: 0.78rem;
-    line-height: 1.2;
+    font-size: 0.74rem;
+    line-height: 1.15;
   }
-  .q-title { font-weight: bold; margin-bottom: 2px; }
+  .q-title { font-weight: bold; margin-bottom: 1px; }
   .mc-options {
-    margin-left: 10px;
+    margin-left: 8px;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1px 6px;
+    gap: 1px 4px;
   }
 
-  /* Self-Contained OMR Strip with Local Corner Registration Tiles */
+  /* Right-hand Bubble Strip Column */
+  .omr-column-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
   .omr-strip {
     position: relative;
     border: 2px solid #000;
-    border-radius: 6px;
-    padding: 24px 10px 10px 10px;
+    border-radius: 4px;
+    padding: 16px 6px 16px 6px;
     display: flex;
     flex-direction: column;
     background: #fff;
   }
   .strip-reg {
     position: absolute;
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     line-height: 0;
   }
-  .strip-tl { top: 4px; left: 4px; }
-  .strip-tr { top: 4px; right: 4px; }
-  .strip-bl { bottom: 4px; left: 4px; }
-  .strip-br { bottom: 4px; right: 4px; }
+  .strip-tl { top: 3px; left: 3px; }
+  .strip-tr { top: 3px; right: 3px; }
+  .strip-bl { bottom: 3px; left: 3px; }
+  .strip-br { bottom: 3px; right: 3px; }
 
   .omr-instruction {
-    font-size: 0.68rem;
+    font-size: 0.65rem;
     text-align: center;
     font-weight: bold;
     color: #000;
-    margin-bottom: 6px;
+    margin-bottom: 3px;
     border-bottom: 1px solid #000;
-    padding-bottom: 3px;
+    padding-bottom: 2px;
   }
   .version-picker {
     display: flex;
     justify-content: space-between;
     align-items: center;
     background: #f1f5f9;
-    padding: 3px 6px;
-    border-radius: 4px;
-    margin-bottom: 8px;
-    font-size: 0.72rem;
+    padding: 2px 4px;
+    border-radius: 3px;
+    margin-bottom: 3px;
+    font-size: 0.7rem;
     font-weight: bold;
   }
   .bubble-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    height: 23px;
-    padding: 0 2px;
-    border-bottom: 1px dotted #cbd5e1;
+    height: 19px;
+    padding: 0 1px;
+    border-bottom: 1px dotted #e2e8f0;
   }
   .bubble-q-num {
     font-weight: bold;
-    font-size: 0.75rem;
-    width: 18px;
+    font-size: 0.72rem;
+    width: 16px;
   }
   .bubble-options {
     display: flex;
-    gap: 6px;
+    gap: 4px;
   }
   .bubble {
-    width: 15px;
-    height: 15px;
-    border: 1.6px solid #000;
+    width: 13.5px;
+    height: 13.5px;
+    border: 1.5px solid #000;
     border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.6rem;
+    font-size: 0.55rem;
     font-weight: bold;
+  }
+
+  .score-box {
+    font-size: 0.7rem;
+    border: 1px solid #64748b;
+    border-radius: 4px;
+    padding: 4px 6px;
+    background: #f8fafc;
+    display: flex;
+    justify-content: space-around;
   }
 
   .written-section {
     margin-top: 4px;
     border: 1.5px solid #000;
     border-radius: 4px;
-    padding: 6px;
+    padding: 5px 8px;
   }
-  .written-section h4 { margin: 0 0 2px 0; font-size: 0.78rem; }
-  .written-box { height: 50px; width: 100%; }
+  .written-section h4 { margin: 0 0 2px 0; font-size: 0.75rem; }
+  .written-box { height: 42px; width: 100%; }
 
   @page {
     size: letter portrait;
@@ -263,9 +280,11 @@
       border: none !important;
       margin: 0 auto !important;
       width: 100% !important;
-      height: 10.4in !important;
+      height: 10.2in !important;
+      max-height: 10.2in !important;
+      page-break-inside: avoid !important;
       page-break-after: always !important;
-      padding: 0.25in !important;
+      padding: 0.25in 0.3in 0.2in 0.3in !important;
     }
   }
 </style>
@@ -276,7 +295,7 @@
   <div class="header-panel">
     <div>
       <h1>Place Value Quiz Generator & OMR Scanner</h1>
-      <small>Grade 6 Math • Local Strip Registration</small>
+      <small>Grade 6 Math • Fit-to-Page Layout</small>
     </div>
     <div class="btn-group">
       <button onclick="window.print()">🖨️ Print Quizzes (A, B, C, D)</button>
@@ -392,7 +411,7 @@ const quizVersions = [
   }
 ];
 
-const svgBlock = `<svg width="16" height="16" viewBox="0 0 16 16"><rect width="16" height="16" fill="#000000" /></svg>`;
+const svgBlock = `<svg width="14" height="14" viewBox="0 0 14 14"><rect width="14" height="14" fill="#000000" /></svg>`;
 
 function renderQuizzes() {
   const container = document.getElementById("quizSheetsContainer");
@@ -428,44 +447,46 @@ function renderQuizzes() {
 
           <div class="written-section">
             <h4>Question 11 (Math Reasoning):</h4>
-            <div style="font-size:0.75rem; margin-bottom:2px;">${quiz.q11}</div>
+            <div style="font-size:0.72rem; margin-bottom:1px;">${quiz.q11}</div>
             <div class="written-box"></div>
           </div>
         </div>
 
-        <!-- OMR STRIP WITH ITS OWN 4 REGISTRATION BLOCKS -->
-        <div class="omr-strip">
-          <div class="strip-reg strip-tl">${svgBlock}</div>
-          <div class="strip-reg strip-tr">${svgBlock}</div>
-          <div class="strip-reg strip-bl">${svgBlock}</div>
-          <div class="strip-reg strip-br">${svgBlock}</div>
+        <!-- RIGHT-SIDE OMR COLUMN -->
+        <div class="omr-column-wrapper">
+          <div class="omr-strip">
+            <div class="strip-reg strip-tl">${svgBlock}</div>
+            <div class="strip-reg strip-tr">${svgBlock}</div>
+            <div class="strip-reg strip-bl">${svgBlock}</div>
+            <div class="strip-reg strip-br">${svgBlock}</div>
 
-          <div class="omr-instruction">BUBBLE ANSWERS (●)</div>
-          
-          <div class="version-picker">
-            <span>VER:</span>
-            <div class="bubble-options">
-              ${['A','B','C','D'].map(v => `
-                <div class="bubble" style="${v === quiz.version ? 'background:#000; color:#fff;' : ''}">${v}</div>
-              `).join('')}
-            </div>
-          </div>
-
-          ${[...Array(10)].map((_, i) => `
-            <div class="bubble-row">
-              <span class="bubble-q-num">${i + 1}.</span>
+            <div class="omr-instruction">BUBBLE ANSWERS (●)</div>
+            
+            <div class="version-picker">
+              <span>VER:</span>
               <div class="bubble-options">
-                <div class="bubble">A</div>
-                <div class="bubble">B</div>
-                <div class="bubble">C</div>
-                <div class="bubble">D</div>
+                ${['A','B','C','D'].map(v => `
+                  <div class="bubble" style="${v === quiz.version ? 'background:#000; color:#fff;' : ''}">${v}</div>
+                `).join('')}
               </div>
             </div>
-          `).join('')}
 
-          <div style="margin-top:10px; font-size:0.7rem; border:1px solid #94a3b8; border-radius:4px; padding:4px; background:#f8fafc;">
-            <div>Q11: ___ / 2</div>
-            <div>Scan: ___ / 10</div>
+            ${[...Array(10)].map((_, i) => `
+              <div class="bubble-row">
+                <span class="bubble-q-num">${i + 1}.</span>
+                <div class="bubble-options">
+                  <div class="bubble">A</div>
+                  <div class="bubble">B</div>
+                  <div class="bubble">C</div>
+                  <div class="bubble">D</div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+
+          <div class="score-box">
+            <span>Q11: ___ / 2</span>
+            <span>Scan: ___ / 10</span>
           </div>
         </div>
       </div>
@@ -503,7 +524,7 @@ async function startCamera() {
     video.setAttribute("webkit-playsinline", "true");
     await video.play();
   } catch (err) {
-    alert("Camera permission error: " + err.message);
+    alert("Camera error: " + err.message);
   }
 }
 
@@ -521,10 +542,6 @@ function captureAndProcess() {
   processImage(offCanvas);
 }
 
-/**
- * Enhanced Detector:
- * Locates the 4 corner markers of the answer strip, then samples bubbles inside that calibrated bounding box.
- */
 function processImage(imgSource) {
   const canvas = document.getElementById("procCanvas");
   const ctx = canvas.getContext("2d");
@@ -538,32 +555,30 @@ function processImage(imgSource) {
   const imgData = ctx.getImageData(0, 0, W, H);
   const data = imgData.data;
 
-  // 1. Find Black Anchor Blobs inside the frame
+  // 1. Locate Black Anchor Blobs of the answer strip
   const darkPoints = [];
-  const step = 6;
+  const step = 5;
   for (let y = 30; y < H - 30; y += step) {
     for (let x = 30; x < W - 30; x += step) {
       const idx = (y * W + x) * 4;
       const lum = (data[idx] + data[idx + 1] + data[idx + 2]) / 3;
-      if (lum < 50) { // Black anchor mark
+      if (lum < 55) {
         darkPoints.push({ x, y });
       }
     }
   }
 
-  // Fallback defaults if lighting/tilt obscures corner markers
   let minX = W * 0.25, maxX = W * 0.75;
   let minY = H * 0.08, maxY = H * 0.92;
 
   if (darkPoints.length > 20) {
-    // Cluster extreme corners
     minX = Math.min(...darkPoints.map(p => p.x));
     maxX = Math.max(...darkPoints.map(p => p.x));
     minY = Math.min(...darkPoints.map(p => p.y));
     maxY = Math.max(...darkPoints.map(p => p.y));
   }
 
-  // Draw calibrated scan bounds
+  // Draw calibrated bounding box
   ctx.strokeStyle = "#00ff00";
   ctx.lineWidth = 3;
   ctx.strokeRect(minX, minY, maxX - minX, maxY - minY);
@@ -571,7 +586,7 @@ function processImage(imgSource) {
   const stripW = maxX - minX;
   const stripH = maxY - minY;
 
-  function sampleDarkness(cx, cy, r = 6) {
+  function sampleDarkness(cx, cy, r = 5) {
     let dark = 0, total = 0;
     for (let y = cy - r; y <= cy + r; y++) {
       for (let x = cx - r; x <= cx + r; x++) {
@@ -585,7 +600,7 @@ function processImage(imgSource) {
     return dark / total;
   }
 
-  // 2. Sample Version Bubbles (located near top of strip)
+  // 2. Detect Version
   const vY = minY + stripH * 0.12;
   const versionXs = [
     minX + stripW * 0.48,
@@ -605,10 +620,10 @@ function processImage(imgSource) {
     }
   });
 
-  // 3. Sample Questions 1 to 10
+  // 3. Detect Questions 1–10
   const optRelXs = [0.38, 0.55, 0.72, 0.89];
-  const qStartY = minY + stripH * 0.20;
-  const qRowHeight = (stripH * 0.65) / 10;
+  const qStartY = minY + stripH * 0.19;
+  const qRowHeight = (stripH * 0.74) / 10;
 
   const detectedAnswers = [];
   const chosenKey = quizVersions.find(v => v.version === detectedVersion) || quizVersions[0];
@@ -624,7 +639,7 @@ function processImage(imgSource) {
 
       ctx.strokeStyle = d > 0.35 ? "#ef4444" : "#3b82f6";
       ctx.lineWidth = 2;
-      ctx.strokeRect(cx - 7, cy - 7, 14, 14);
+      ctx.strokeRect(cx - 6, cy - 6, 12, 12);
 
       if (d > maxDark && d > 0.30) {
         maxDark = d;
@@ -634,7 +649,7 @@ function processImage(imgSource) {
     detectedAnswers.push(chosen);
   }
 
-  // 4. Match & Score
+  // 4. Calculate Score
   let correctCount = 0;
   chosenKey.questions.forEach((q, idx) => {
     if (detectedAnswers[idx] === q.ans) correctCount++;
