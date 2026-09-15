@@ -119,14 +119,14 @@
   }
   th { background: #f8fafc; font-weight: 600; }
 
-  /* Printable Sheet Styling - Locked to single 8.5 x 11 sheet */
+  /* Printable Sheet Styling - Single 8.5 x 11 Sheet */
   .printable-page {
     background: white;
     width: 8.0in;
-    height: 10.2in;
-    max-height: 10.2in;
+    height: 10.3in;
+    max-height: 10.3in;
     margin: 16px auto;
-    padding: 0.3in 0.35in 0.25in 0.35in;
+    padding: 0.3in 0.35in 0.2in 0.35in;
     box-shadow: 0 0 10px rgba(0,0,0,0.15);
     display: flex;
     flex-direction: column;
@@ -136,38 +136,45 @@
 
   .quiz-header {
     border-bottom: 2px solid #000;
-    padding-bottom: 3px;
-    margin-bottom: 6px;
+    padding-bottom: 4px;
+    margin-bottom: 8px;
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
   }
-  .quiz-header h2 { margin: 0; font-size: 1.1rem; text-transform: uppercase; }
-  .student-fields { display: flex; gap: 14px; font-size: 0.82rem; font-weight: bold; }
-  .underline-fill { display: inline-block; border-bottom: 1.5px solid #000; width: 120px; height: 13px; }
+  .quiz-header h2 { margin: 0; font-size: 1.15rem; text-transform: uppercase; letter-spacing: 0.5px; }
+  .student-fields { display: flex; gap: 16px; font-size: 0.88rem; font-weight: bold; }
+  .underline-fill { display: inline-block; border-bottom: 1.5px solid #000; width: 130px; height: 14px; }
 
   .quiz-body {
     display: grid;
-    grid-template-columns: 69% 31%;
-    gap: 12px;
+    grid-template-columns: 70% 30%;
+    gap: 14px;
     flex-grow: 1;
   }
 
+  /* Spacious, comfortable question formatting */
   .questions-col {
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    justify-content: space-between;
   }
   .question-item {
-    font-size: 0.74rem;
-    line-height: 1.15;
+    font-size: 0.82rem;
+    line-height: 1.25;
+    margin-bottom: 2px;
   }
-  .q-title { font-weight: bold; margin-bottom: 1px; }
+  .q-title {
+    font-weight: 600;
+    color: #0f172a;
+    margin-bottom: 2px;
+  }
   .mc-options {
-    margin-left: 8px;
+    margin-left: 10px;
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 1px 4px;
+    gap: 2px 8px;
+    color: #1e293b;
   }
 
   /* Right-hand Bubble Strip Column */
@@ -180,7 +187,7 @@
     position: relative;
     border: 2px solid #000;
     border-radius: 4px;
-    padding: 16px 6px 16px 6px;
+    padding: 16px 6px;
     display: flex;
     flex-direction: column;
     background: #fff;
@@ -201,7 +208,7 @@
     text-align: center;
     font-weight: bold;
     color: #000;
-    margin-bottom: 3px;
+    margin-bottom: 4px;
     border-bottom: 1px solid #000;
     padding-bottom: 2px;
   }
@@ -212,7 +219,7 @@
     background: #f1f5f9;
     padding: 2px 4px;
     border-radius: 3px;
-    margin-bottom: 3px;
+    margin-bottom: 4px;
     font-size: 0.7rem;
     font-weight: bold;
   }
@@ -246,7 +253,7 @@
   }
 
   .score-box {
-    font-size: 0.7rem;
+    font-size: 0.72rem;
     border: 1px solid #64748b;
     border-radius: 4px;
     padding: 4px 6px;
@@ -256,13 +263,13 @@
   }
 
   .written-section {
-    margin-top: 4px;
+    margin-top: 6px;
     border: 1.5px solid #000;
     border-radius: 4px;
     padding: 5px 8px;
   }
-  .written-section h4 { margin: 0 0 2px 0; font-size: 0.75rem; }
-  .written-box { height: 42px; width: 100%; }
+  .written-section h4 { margin: 0 0 2px 0; font-size: 0.78rem; }
+  .written-box { height: 38px; width: 100%; }
 
   @page {
     size: letter portrait;
@@ -280,11 +287,11 @@
       border: none !important;
       margin: 0 auto !important;
       width: 100% !important;
-      height: 10.2in !important;
-      max-height: 10.2in !important;
+      height: 10.3in !important;
+      max-height: 10.3in !important;
       page-break-inside: avoid !important;
       page-break-after: always !important;
-      padding: 0.25in 0.3in 0.2in 0.3in !important;
+      padding: 0.25in 0.3in 0.15in 0.3in !important;
     }
   }
 </style>
@@ -447,12 +454,11 @@ function renderQuizzes() {
 
           <div class="written-section">
             <h4>Question 11 (Math Reasoning):</h4>
-            <div style="font-size:0.72rem; margin-bottom:1px;">${quiz.q11}</div>
+            <div style="font-size:0.75rem; margin-bottom:2px;">${quiz.q11}</div>
             <div class="written-box"></div>
           </div>
         </div>
 
-        <!-- RIGHT-SIDE OMR COLUMN -->
         <div class="omr-column-wrapper">
           <div class="omr-strip">
             <div class="strip-reg strip-tl">${svgBlock}</div>
@@ -578,7 +584,6 @@ function processImage(imgSource) {
     maxY = Math.max(...darkPoints.map(p => p.y));
   }
 
-  // Draw calibrated bounding box
   ctx.strokeStyle = "#00ff00";
   ctx.lineWidth = 3;
   ctx.strokeRect(minX, minY, maxX - minX, maxY - minY);
