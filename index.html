@@ -1,1 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Live OMR Quiz Scanner</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background-color: #121212;
+    color: #fff;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+  }
+  #camera-container {
+    position: relative;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  video {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+  canvas#overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    pointer-events: none;
+  }
+  #status-pill {
+    position: absolute;
+    top: 24px;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    padding: 10px 20px;
+    border-radius: 24px;
+    font-size: 15px;
+    font-weight: 600;
+    z-index: 10;
+    border: 1px solid rgba(255,255,255,0.15);
+  }
+  #score-card {
+    display: none;
+    position: absolute;
+    bottom: 40px;
+    background: #00E676;
+    color: #000;
+    padding: 16px 28px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0, 230, 118, 0.4);
+    font-size: 20px;
+    font-weight: 800;
+    z-index: 10;
+    text-align: center;
+    animation: popIn 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  #score-card div { font-size: 13px; font-weight: 500; margin-top: 4px; }
+  @keyframes popIn {
+    from { transform: scale(0.8); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+</style>
+</head>
+<body>
 
+<div id="status-pill">Loading OpenCV.js Engine...</div>
+<div id="score-card">
+  <span id="score-text">SCORE: 5 / 5 (100%)</span>
+  <div id="answers-text">Answers: B, C, A, D, B</div>
+</div>
+
+<div id="camera-container">
+  <video id="video" playsinline></video>
+  <canvas id="overlay"></canvas>
+</div>
+
+<!-- OpenCV.js WebAssembly -->
+<script async src="https://docs.opencv.org/4.10.0/opencv.js" onload="onOpenCvReady();" type="text/javascript"></script>
+
+<script>
+const ANSWER_KEY = [1, 2, 0, 3, 1]; // 0:A, 1:B, 2:C, 3:D (Q1:B, Q2:C, Q3:A, Q4:D, Q5:B)
+const CHOICES = ["A", "B", "C", "D"];
+const NUM_QUESTIONS = 5;
+
+let video = document.getElementById("video");
+let overlay = document.getElementById("overlay");
+let ctx = overlay.getContext("2d");
+let statusPill = document.getElementById("status-pill");
+let scoreCard = document.getElementById("score-card");
+
+let cap = null;
+let src = null, gray = null, thresh = null;
+let isScanning = true;
+let audioCtx = null;
+
+function playBeep() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    let osc = audioCtx.createOscillator();
+    let gain = audioCtx.createGain();
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(880, audioCtx.currentTime); // A5 note
+    gain.gain.setValueAtTime(0.2, audioCtx.currentTime);
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.start();
+    osc.stop(audioCtx.currentTime + 0.15);
+    if (navigator.vibrate) navigator.vibrate(100);
+  } catch(e){}
+}
+
+function onOpenCvReady() {
+  statusPill.innerText = "Requesting Camera...";
+  startCamera();
+}
+
+function startCamera() {
+  navigator.mediaDevices.getUserMedia({
+    video: { facingMode: { ideal: "environment" }, width: { ideal: 1280 }, height: { ideal: 720 } },
+    audio: false
+  }).then(stream => {
+    video.srcObject = stream;
+    video.play();
+    video.onloadedmetadata = () => {
+      overlay.width = video.videoWidth;
+      overlay.height = video.videoHeight;
+      statusPill.innerText = "Point at Answer Sheet Column";
+      initCV();
+      requestAnimationFrame(processFrame);
+    };
+  }).catch(err => {
+    statusPill.innerText = "Camera access denied or unavailable: " + err.message;
+  });
+}
+
+function initCV() {
+  src = new cv.Mat(video.videoHeight, video.videoWidth, cv.CV_8UC4);
+  gray = new cv.Mat(video.videoHeight, video.videoWidth, cv.CV_8UC1);
+  thresh = new cv.Mat(video.videoHeight, video.videoWidth, cv.CV_8UC1);
+  cap = new cv.VideoCapture(video);
+}
+
+function processFrame() {
+  if (!isScanning) {
+    requestAnimationFrame(processFrame);
+    return;
+  }
+
+  cap.read(src);
+  cv.cvtColor(src, gray, cv.COLOR_RGBA2GRAY);
+  cv.GaussianBlur(gray, gray, new cv.Size(5, 5), 0);
+  cv.threshold(gray, thresh, 80, 255, cv.THRESH_BINARY_INV);
+
+  let contours = new cv.MatVector();
+  let hierarchy = new cv.Mat();
+  cv.findContours(thresh, contours, hierarchy, cv.RETR_EXTERNAL, cv.CHAIN_APPROX_SIMPLE);
+
+  let markers = [];
+  ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+  for (let i = 0; i < contours.size(); ++i) {
+    let cnt = contours.get(i);
+    let peri = cv.arcLength(cnt, true);
+    let approx = new cv.Mat();
+    cv.approxPolyDP(cnt, approx, 0.04 * peri, true);
+
+    if (approx.rows === 4) {
+      let rect = cv.boundingRect(approx);
+      let ar = rect.width / rect.height;
+      if (ar >= 0.75 && ar <= 1.3 && rect.width > 12 && rect.width < 100) {
+        markers.push(rect);
+        // Draw green live detection boxes over detected squares
+        ctx.strokeStyle = "#00E676";
+        ctx.lineWidth = 3;
+        ctx.strokeRect(rect.x, rect.y, rect.width, rect.height);
+      }
+    }
+    approx.delete();
+  }
+
+  // Once 4 corner markers are locked
+  if (markers.length === 4) {
+    evaluateSheet(markers);
+  }
+
+  contours.delete();
+  hierarchy.delete();
+  requestAnimationFrame(processFrame);
+}
+
+function evaluateSheet(markers) {
+  let centers = markers.map(r => ({ x: r.x + r.width / 2, y: r.y + r.height / 2 }));
+
+  // Sort corners: Top-Left, Top-Right, Bottom-Left, Bottom-Right
+  centers.sort((a, b) => a.y - b.y);
+  let topTwo = centers.slice(0, 2).sort((a, b) => a.x - b.x);
+  let botTwo = centers.slice(2, 4).sort((a, b) => a.x - b.x);
+
+  let srcCoords = [topTwo[0], topTwo[1], botTwo[1], botTwo[0]];
+
+  let srcTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
+    srcCoords[0].x, srcCoords[0].y,
+    srcCoords[1].x, srcCoords[1].y,
+    srcCoords[2].x, srcCoords[2].y,
+    srcCoords[3].x, srcCoords[3].y
+  ]);
+
+  let targetW = 300, targetH = 500;
+  let dstTri = cv.matFromArray(4, 1, cv.CV_32FC2, [
+    0, 0,
+    targetW - 1, 0,
+    targetW - 1, targetH - 1,
+    0, targetH - 1
+  ]);
+
+  let M = cv.getPerspectiveTransform(srcTri, dstTri);
+  let warped = new cv.Mat();
+  cv.warpPerspective(gray, warped, M, new cv.Size(targetW, targetH));
+
+  let warpedThresh = new cv.Mat();
+  cv.threshold(warped, warpedThresh, 0, 255, cv.THRESH_BINARY_INV | cv.THRESH_OTSU);
+
+  let rowH = targetH / NUM_QUESTIONS;
+  let colW = (targetW - 50) / 4;
+  let studentAnswers = [];
+  let score = 0;
+
+  for (let q = 0; q < NUM_QUESTIONS; q++) {
+    let rowY = Math.floor(q * rowH);
+    let maxFill = -1;
+    let selectedOpt = 0;
+
+    for (let opt = 0; opt < 4; opt++) {
+      let x = Math.floor(45 + opt * colW + 5);
+      let y = Math.floor(rowY + 15);
+      let w = Math.floor(colW - 15);
+      let h = Math.floor(rowH - 30);
+
+      let rect = new cv.Rect(x, y, w, h);
+      let roi = warpedThresh.roi(rect);
+      let nonZero = cv.countNonZero(roi);
+      roi.delete();
+
+      if (nonZero > maxFill) {
+        maxFill = nonZero;
+        selectedOpt = opt;
+      }
+    }
+    studentAnswers.push(CHOICES[selectedOpt]);
+    if (selectedOpt === ANSWER_KEY[q]) score++;
+  }
+
+  // Trigger Instant Graded Event
+  playBeep();
+  isScanning = false;
+  document.getElementById("score-text").innerText = `SCORE: ${score} / ${NUM_QUESTIONS} (${(score/NUM_QUESTIONS)*100}%)`;
+  document.getElementById("answers-text").innerText = `Answers: ${studentAnswers.join(", ")}`;
+  scoreCard.style.display = "block";
+  statusPill.innerText = "Tap screen to scan next sheet";
+
+  // Cleanup
+  srcTri.delete(); dstTri.delete(); M.delete(); warped.delete(); warpedThresh.delete();
+}
+
+// Tap anywhere to scan the next student's quiz
+window.addEventListener("click", () => {
+  if (!isScanning) {
+    scoreCard.style.display = "none";
+    statusPill.innerText = "Point at Answer Sheet Column";
+    isScanning = true;
+  }
+});
+</script>
+</body>
+</html>
